@@ -294,20 +294,79 @@ void printText(struct Text** text)
 	for (size_t i = 0; i < (*text)->len; i++)
 	{
 		struct Sentence sent = ((*text)->sentences_array)[i];
+		struct Word word_obj;
 
 		for (size_t j = 0; j < (sent.len); j++)
 		{
-			struct Word word_obj = sent.words_array[j];
+			word_obj = sent.words_array[j];
 			wprintf(L"%ls%lc ", word_obj.word, word_obj.punct);	
 		}
-		wprintf(L"\n");
+		if (word_obj.punct != L'\n') { wprintf(L"\n"); }
 	}
 }
 
-struct Text preProcessing()
+void remDupFromText(struct Text** text)
 {
-	
-};
+	uint8_t flag = 0;
+	// перебор по строкам текста
+	for (size_t i = 0; i < (*text)->len; i++)
+	{
+		// фиксируем текущее предложение
+		struct Sentence sent1 = (*text)->sentences_array[i];
+		struct Sentence sent2;
+
+		if (i + 1 < (*text)->len)
+		{
+			// перебор по предложениям от зафиксированного
+			for (size_t j = i + 1; j < (*text)->len; j++)
+			{
+				struct Sentence sent2 = (*text)->sentences_array[j];
+
+				// если длины предложений разные, проверять дальше смысла нет
+				if (sent1.len != sent2.len) { continue; }
+				else
+				{
+					flag = 1;
+					// перебираем слова в предложениях
+					for (size_t l = 0; l < sent1.len; l++)
+					{
+						// фиксируем слова с одинаковыми индексами в предложениях
+						struct Word word1 = sent1.words_array[l], word2 = sent2.words_array[l];
+
+						// если знаки препинания при словах разные - дальше проверять смысла нет
+						if (word1.punct != word2.punct)
+						{
+							flag = 0;
+							break;
+						}
+
+						// перебор по символам в словах
+						for (size_t g = 0; g < word1.len; g++)
+						{
+							if (tolower(word1.word[g]) != tolower(word2.word[g]))
+							{
+								flag = 0;
+								break;
+							}
+						}
+					}
+				}
+				// если flag = 1, то только что проверенное предложение c индексом j
+				// равно фиксированному - удаляем его! >:)
+				if (flag == 1)
+				{
+					for (size_t v = j; v < (*text)->len - 1; v++)
+					{
+						(*text)->sentences_array[v] = (*text)->sentences_array[v+1]; 
+					}
+					(*text)->len--;
+					free(((*text)->sentences_array[(*text)->len]).words_array);
+					flag = 0;
+				}
+			}
+		}
+	}
+}
 
 void printManual()
 {
@@ -349,6 +408,7 @@ int main()
 			// вывод введённого пользователем текста
 			struct Text* text = (struct Text*)malloc(sizeof(struct Text));
 			text = readText();
+			remDupFromText(&text);
 			printText(&text);
 
 			switch(N)
