@@ -1,0 +1,10 @@
+Duplicated English sentences:.
+Hello, world.
+HELLO, WoRlD.
+hello, world.
+Duplicated Russian sentences:.
+Привет, Мир.
+привет, МиР.
+ПрИвЕт, Мир.
+
+

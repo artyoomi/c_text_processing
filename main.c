@@ -6,9 +6,8 @@
 #include <wctype.h>
 #include <stdint.h>
 
-#define OPTION L"5.13"
-#define NAME L"Artem"
-#define SURNAME L"Ivanov"
+#include "./include/printWelcomeMessage.h"
+#include "./include/printManual.h"
 
 #define BLOCK_SIZE 5
 
@@ -16,33 +15,28 @@ struct Word
 {
 	wchar_t* word;
 	wchar_t punct;
-    size_t len;
+    uint32_t len;
 };
 
 struct Sentence
 {
-	struct Word* words_array;
-	uint8_t is_last;
-	size_t len;
+	struct Word** words_array;
+	uint16_t is_last;
+	uint32_t len;
 };
 
 struct Text
 {
-	struct Sentence* sentences_array;
-	size_t len;
+	struct Sentence** sentences_array;
+	uint32_t len;
 };
 
-void printWelcomeMessage()
-{
-	wprintf(L"Course work for option %ls, created by %ls %ls.\n", OPTION, NAME, SURNAME);
-}
-
-void safetyReallocMemToWStr(wchar_t** buffer, uint32_t* count_of_allocated)
+void safetyReallocMemToWStr(wchar_t** buffer, int32_t* count_of_allocated_chars)
 {
 	// сохраняем область памяти, на которую указывает buffer изначально
 	wchar_t* old_buffer = *buffer;
 	// пробуем выделить память
-	*buffer = (wchar_t*)realloc(*buffer, (*count_of_allocated + BLOCK_SIZE)*sizeof(wchar_t));
+	*buffer = (wchar_t*)realloc(*buffer, (*count_of_allocated_chars + BLOCK_SIZE)*sizeof(wchar_t));
 
 	// если указатель на buffer == NULL, значит произошла ошибка
 	if (*buffer == NULL)
@@ -64,23 +58,32 @@ void safetyReallocMemToWStr(wchar_t** buffer, uint32_t* count_of_allocated)
 	}
 	else
 	{
-		*count_of_allocated += BLOCK_SIZE;
+		*count_of_allocated_chars += BLOCK_SIZE;
 	}
 }
 
-void safetyReallocMemToWordArr(struct Word** arr, uint32_t* count_of_allocated)
+void safetyReallocMemToWordsArray(struct Word*** buffer, int32_t* count_of_allocated_words)
 {
 	// сохраняем область памяти, на которую указывает buffer изначально
-	struct Word* old_arr = *arr;
+	struct Word** old_buffer = *buffer;
 	// пробуем выделить память
-	*arr = (struct Word*)realloc(*arr, (*count_of_allocated + BLOCK_SIZE)*sizeof(struct Word));
+	*buffer = (struct Word**)realloc(*buffer, (*count_of_allocated_words + BLOCK_SIZE)*sizeof(struct Word*));
+	for (uint32_t i = *count_of_allocated_words; i < *count_of_allocated_words + BLOCK_SIZE; i++)
+	{
+		(*buffer)[i] = (struct Word*)malloc(sizeof(struct Word));
+		if ((*buffer)[i] == NULL)
+		{
+			fwprintf(stderr, L"error: failed to allocate memory to struct Word\n");
+			exit(0);
+		}
+	}
 
 	// если указатель на buffer == NULL, значит произошла ошибка
-	if (*arr == NULL)
+	if (*buffer == NULL)
 	{
 		// если память изначально указывала на NULL, это значит что мы её выделяли впервые
 		// выводим соответствующее сообщение об ошибке
-		if (old_arr == NULL)
+		if (old_buffer == NULL)
 		{
 			fwprintf(stderr, L"error: failed to allocate memory\n");
 			exit(0);
@@ -88,30 +91,41 @@ void safetyReallocMemToWordArr(struct Word** arr, uint32_t* count_of_allocated)
 		// иначе была ошибка при перевыделении
 		else
 		{
-			*arr = old_arr;
-			fwprintf(stderr, L"error: failed to re-allocate memory, the part of array that has already been read will be returned\n");
+			*buffer = old_buffer;
+			fwprintf(stderr, L"error: failed to re-allocate memory, the part of sequence that has already been read will be returned\n");
 			exit(0);
 		}
 	}
 	else
 	{
-		*count_of_allocated += BLOCK_SIZE;
+		*count_of_allocated_words += BLOCK_SIZE;
 	}
 }
 
-void safetyReallocMemToSentArr(struct Sentence** arr, uint32_t* count_of_allocated)
+void safetyReallocMemToSentencesArray(struct Sentence*** buffer, int32_t* count_of_allocated_sentences)
 {
 	// сохраняем область памяти, на которую указывает buffer изначально
-	struct Sentence* old_arr = *arr;
+	struct Sentence** old_buffer = *buffer;
+
 	// пробуем выделить память
-	*arr = (struct Sentence*)realloc(*arr, (*count_of_allocated + BLOCK_SIZE)*sizeof(struct Sentence));
+	*buffer = (struct Sentence**)realloc(*buffer, (*count_of_allocated_sentences + BLOCK_SIZE)*sizeof(struct Sentence*));
+	for (uint32_t i = *count_of_allocated_sentences; i < *count_of_allocated_sentences + BLOCK_SIZE; i++)
+	{
+		(*buffer)[i] = (struct Sentence*)malloc(sizeof(struct Sentence));
+
+		if ((*buffer)[i] == NULL)
+		{
+			fwprintf(stderr, L"error: failed to allocate memory to struct Sentence\n");
+			exit(0);
+		}
+	}
 
 	// если указатель на buffer == NULL, значит произошла ошибка
-	if (*arr == NULL)
+	if (*buffer == NULL)
 	{
 		// если память изначально указывала на NULL, это значит что мы её выделяли впервые
 		// выводим соответствующее сообщение об ошибке
-		if (old_arr == NULL)
+		if (old_buffer == NULL)
 		{
 			fwprintf(stderr, L"error: failed to allocate memory\n");
 			exit(0);
@@ -119,274 +133,181 @@ void safetyReallocMemToSentArr(struct Sentence** arr, uint32_t* count_of_allocat
 		// иначе была ошибка при перевыделении
 		else
 		{
-			*arr = old_arr;
-			fwprintf(stderr, L"error: failed to re-allocate memory, the part of array that has already been read will be returned\n");
+			*buffer = old_buffer;
+			fwprintf(stderr, L"error: failed to re-allocate memory, the part of sequence that has already been read will be returned\n");
 			exit(0);
 		}
 	}
 	else
 	{
-		*count_of_allocated += BLOCK_SIZE;
+		*count_of_allocated_sentences += BLOCK_SIZE;
 	}
-}
-
-struct Word* readWord()
-{
-	// выделяем память под структуру Word
-	struct Word* word_obj = (struct Word*)malloc(sizeof(struct Word));
-
-	// переменные для хранения количества считанных элементов и количества выделенной памяти соответственно
-	uint32_t count_of_read = 0, count_of_allocated = 0;
-
-	// переменная для хранения слова
-	wchar_t* buffer = NULL;
-
-	// если выделить память не удалось, выводим ошибку и завершаем программу
-	safetyReallocMemToWStr(&buffer, &count_of_allocated);
-
-	// переменная для хранения текущего символа и знака препинания (если  его нет, то знак препинания - \0)
-	wchar_t c, prev_c = L'\0', punct = L'\0';
-
-	// индикатор начала слова: 0 - слово ещё не началось, 1 - началось
-	uint16_t word_begin = 0;
-
-	// считываем, пока цикл не завершится с помощью break
-	while (1)
-	{
-		c = getwchar();
-
-		// проверяем условие конца считывания текста
-		if (c == L'\n' && prev_c == L'\n')
-		{
-			word_obj->punct = L'\n';
-			break;
-		}
-
-		// если выделенная память уже заполнена - перевыделяем
-		if (count_of_read == count_of_allocated) { safetyReallocMemToWStr(&buffer, &count_of_allocated); }
-
-		// если слово уже началось
-		if (word_begin)
-		{
-			// провряем, что символ не является пробельным, запятой или точкой
-			if (c != L',' && c != L'.' && !iswspace(c))
-			{
-				buffer[count_of_read] = c;
-				count_of_read++;
-			}
-			
-			// если символ равен запятой, точке или символ пробельный
-			// то слово закончилось
-			else if (c == L',' || c == L'.' || iswspace(c))
-			{
-				if (c == L'.' || c == L',')
-				{
-					word_obj->punct = c;
-				}
-				else
-				{
-					word_obj->punct = punct;
-				}
-
-				// после завершаем считывание, ведь слово уже закончилось
-				break;
-			}
-		}
-
-		// если слово ещё не началось и текущий символ не равен пробельному символу или запятой
-		// то это значит что слово началось и надо записать символ в слово
-		else if (!word_begin && c != L',' && c != L'.' && !iswspace(c))
-		{
-			buffer[count_of_read] = c;
-			count_of_read++;
-			word_begin = 1;
-		}
-
-		prev_c = c;
-	}
-
-	// если не хватает памяти чтобы записать в конец слова \0 - перевыделяем
-	if (count_of_read >= count_of_allocated)
-	{
-		safetyReallocMemToWStr(&buffer, &count_of_allocated);
-	}
-	buffer[count_of_read] = L'\0';
-
-	// если был считан хотя бы один символ - записываем слово и его длину в поля структуры
-	if (count_of_read != 0)
-	{
-		word_obj->word = buffer;
-		word_obj->len = count_of_read;
-	}
-	// иначе не было считано ни одного символа, т.е. указатель на первый символ слова это NULL
-	else
-	{
-		word_obj->word = NULL;
-		word_obj->len = 0;
-	}
-
-	return word_obj;
 }
 
 struct Sentence* readSentence()
 {
-	struct Sentence* sentence_obj = (struct Sentence*)malloc(sizeof(struct Sentence));
-	sentence_obj->is_last = 0;
+	struct Sentence *sentence = (struct Sentence*)malloc( sizeof(struct Sentence) );
 
-	uint32_t count_of_read = 0, count_of_allocated = 0;
+	uint32_t count_of_read_words = 0, count_of_allocated_words = 0;
 
-	struct Word* wordsArr = NULL;
-	safetyReallocMemToWordArr(&wordsArr, &count_of_allocated);
+	// определяем массив указателей на структуры Word и выделяем под него память
+	//struct Word **words_array = (struct Word**)malloc( BLOCK_SIZE * sizeof(struct Word*) );
+	//for (size_t i = 0; i < BLOCK_SIZE; i++) { words_array[i] = (struct Word*)malloc(sizeof(struct Word)); }
+	struct Word **words_array = NULL;
+	safetyReallocMemToWordsArray(&words_array, &count_of_allocated_words);
 
-	struct Word* word_obj = (struct Word*)malloc(sizeof(struct Word));
-	
-	// чтобы избежать ошибки
-	word_obj->punct = L'\0';
+	int32_t count_of_read_chars = 0, count_of_allocated_chars = 0;
 
-	while ((word_obj->punct) != L'.')
+	wchar_t c = getwchar(), prev_c = '\0';
+
+	uint8_t in_word = 0, is_last = 0;
+
+	wchar_t punct = L'\0';
+
+	while (1)
 	{
-		word_obj = readWord();
-		if (count_of_read >= count_of_allocated) { safetyReallocMemToWordArr(&wordsArr, &count_of_allocated); }
-		if (word_obj->punct == L'\n')
+		// если последний знак препинания равен точке, то это значит что предложение закончилось
+		if (count_of_read_words >= 1)
 		{
-			sentence_obj->is_last = 1;
-			break;
+			if (words_array[count_of_read_words - 1]->punct == L'.')
+			{
+				break;
+			}
 		}
-		wordsArr[count_of_read] = *word_obj;
-		count_of_read++;
+		else
+		{
+			if (words_array[0]->punct == L'.')
+			{
+				break;
+			}
+		}
 
-		// просто для теста, удалить до защиты!!!
-		//wprintf(L"[%d] | seq is [%ls] | len is [%d] | punct is [%lc]\n", count_of_read, word_obj->word, word_obj->len, word_obj->punct);
+		// проверяем условие начала слова
+		if (!in_word && !iswspace(c) && c != L',' && c != L'.')
+		{
+			safetyReallocMemToWStr(&words_array[count_of_read_words]->word, &count_of_allocated_chars);
+			in_word = 1;
+			words_array[count_of_read_words]->word[count_of_read_chars++] = c;
+
+		}
+		// проверяем какие знаки стоят после слова и записываем 
+		else if (count_of_read_words >= 1 && !in_word)
+		{
+			// если точка
+			if (c == L'.' && words_array[count_of_read_words - 1]->punct != L'.') { words_array[count_of_read_words - 1]->punct = L'.'; }
+			else if (c == ',' && words_array[count_of_read_words - 1]->punct == L'\0') { words_array[count_of_read_words - 1]->punct = L','; }
+		}
+		else
+		{
+			if (in_word)
+			{
+				while(in_word)
+				{
+					// если символ допустимый - записываем его в слово
+					if (!iswspace(c) && c != L',' && c != L'.')
+					{
+						// проверяем, что памяти ещё хватает, если нет - выделяем ещё
+						if (count_of_read_chars + 1 > count_of_allocated_chars) { safetyReallocMemToWStr(&words_array[count_of_read_words]->word, &count_of_allocated_chars); }
+
+						words_array[count_of_read_words]->word[count_of_read_chars++] = c;
+
+						prev_c = c;
+						c = getwchar();
+						continue;
+					}
+					else
+					{
+						in_word = 0;
+						words_array[count_of_read_words]->word[count_of_read_chars] = L'\0';
+
+						if (count_of_read_words + 1 >= count_of_allocated_words) { safetyReallocMemToWordsArray(&words_array, &count_of_allocated_words); }
+
+						// сохраняем длину слова
+						words_array[count_of_read_words]->len = count_of_read_chars;
+						
+						// сохраняем знак после слова
+						if (c == L',' || c == L'.') { words_array[count_of_read_words]->punct = c; }
+						else { words_array[count_of_read_words]->punct = '\0'; }
+
+						count_of_read_chars = 0;
+						count_of_allocated_chars = 0;
+
+						count_of_read_words++;
+					}
+				}
+				continue;
+			}
+		}
+
+		if (c == L'\n' && prev_c == L'\n')
+			{
+				is_last = 1;
+				break;
+			}
+
+		prev_c = c;
+		c = getwchar();
 	}
-	sentence_obj->words_array = wordsArr;
-	sentence_obj->len = count_of_read;
-	//wprintf(L"sentence is_last is [%d]\n", sentence_obj->is_last);
-	return sentence_obj;
-}
+
+	sentence->words_array = words_array;
+	sentence->len = count_of_read_words;
+	sentence->is_last = is_last;
+
+	return sentence;
+}	
 
 struct Text* readText()
 {
-	struct Text* text_obj = (struct Text*)malloc(sizeof(struct Text));
+	// объявление результирующей структуры Text
+	struct Text* text = (struct Text*)malloc(sizeof(struct Text));
+	text->sentences_array = NULL;
+	text->len = 0;
 
-	uint32_t count_of_read = 0, count_of_allocated = 0;
+	struct Sentence* curr_sentence = readSentence();
 
-	struct Sentence* sentsArr = NULL;
-	safetyReallocMemToSentArr(&sentsArr, &count_of_allocated);
+	uint32_t count_of_read_sentences = 1, count_of_allocated_sentences = 0;
 
-	struct Sentence* sentence_obj = (struct Sentence*)malloc(sizeof(struct Sentence));
-
-	while ((sentence_obj->is_last) != 1)
+	while (1)
 	{
-		if (count_of_read  >= count_of_allocated) { safetyReallocMemToSentArr(&sentsArr, &count_of_allocated); }
+		if (count_of_read_sentences > count_of_allocated_sentences) { safetyReallocMemToSentencesArray(&(text->sentences_array), &count_of_allocated_sentences); }
 
-		sentence_obj = readSentence();
-		sentsArr[count_of_read] = *sentence_obj;
-		count_of_read++;
+		text->sentences_array[count_of_read_sentences-1] = curr_sentence;
+
+		curr_sentence = readSentence();
+		if (curr_sentence->is_last) { break; }
+		count_of_read_sentences++;
 	}
-	text_obj->sentences_array = sentsArr;
-	text_obj->len = count_of_read;
 
-	return text_obj;
+	text->len = count_of_read_sentences;
+
+	return text;
 }
 
-void printText(struct Text** text)
+void printText(struct Text **text)
 {
-	for (size_t i = 0; i < (*text)->len; i++)
-	{
-		struct Sentence sent = ((*text)->sentences_array)[i];
-		struct Word word_obj;
+	struct Sentence** sentences_array = (*text)->sentences_array;
 
-		for (size_t j = 0; j < (sent.len); j++)
+	// перебор предложений текста
+	for (uint32_t i = 0; i < (*text)->len; i++)
+	{
+		struct Sentence* sentence = sentences_array[i];
+
+		// перебор слов текста
+		for (uint32_t j = 0; j < sentence->len; j++)
 		{
-			word_obj = sent.words_array[j];
-			wprintf(L"%ls%lc ", word_obj.word, word_obj.punct);	
+			if ((sentence->words_array)[j]->punct != L'\0') { wprintf(L"%ls%lc ", sentence->words_array[j]->word, sentence->words_array[j]->punct); }
+
+			else { wprintf(L"%ls ", (sentence->words_array)[j]->word); }
 		}
-		if (word_obj.punct != L'\n') { wprintf(L"\n"); }
+		wprintf(L"\n");
 	}
-}
-
-void remDupFromText(struct Text** text)
-{
-	uint8_t flag = 0;
-	// перебор по строкам текста
-	for (size_t i = 0; i < (*text)->len; i++)
-	{
-		// фиксируем текущее предложение
-		struct Sentence sent1 = (*text)->sentences_array[i];
-		struct Sentence sent2;
-
-		if (i + 1 < (*text)->len)
-		{
-			// перебор по предложениям от зафиксированного
-			for (size_t j = i + 1; j < (*text)->len; j++)
-			{
-				struct Sentence sent2 = (*text)->sentences_array[j];
-
-				// если длины предложений разные, проверять дальше смысла нет
-				if (sent1.len != sent2.len) { continue; }
-				else
-				{
-					flag = 1;
-					// перебираем слова в предложениях
-					for (size_t l = 0; l < sent1.len; l++)
-					{
-						// фиксируем слова с одинаковыми индексами в предложениях
-						struct Word word1 = sent1.words_array[l], word2 = sent2.words_array[l];
-
-						// если знаки препинания при словах разные - дальше проверять смысла нет
-						if (word1.punct != word2.punct)
-						{
-							flag = 0;
-							break;
-						}
-
-						// перебор по символам в словах
-						for (size_t g = 0; g < word1.len; g++)
-						{
-							if (tolower(word1.word[g]) != tolower(word2.word[g]))
-							{
-								flag = 0;
-								break;
-							}
-						}
-					}
-				}
-				// если flag = 1, то только что проверенное предложение c индексом j
-				// равно фиксированному - удаляем его! >:)
-				if (flag == 1)
-				{
-					for (size_t v = j; v < (*text)->len - 1; v++)
-					{
-						(*text)->sentences_array[v] = (*text)->sentences_array[v+1]; 
-					}
-					(*text)->len--;
-					free(((*text)->sentences_array[(*text)->len]).words_array);
-					flag = 0;
-				}
-			}
-		}
-	}
-}
-
-void printManual()
-{
-	wprintf(L"╔───╦───────────────────────────────────────────╢ MANUAL ╟─────────────────────────────────────────────────────╗\n");
-	wprintf(L"| 1 | Сделть сдвиг слов в предложении на положительное целое число N.                                          |\n");      	
-	wprintf(L"|   | Например, предложение “abc b#c ИЙ два” при N = 2 должно принять вид “ИЙ два abc b#c”.                    |\n");
-	wprintf(L"╠───╬──────────────────────────────────────────────────────────────────────────────────────────────────────────╣\n");
-	wprintf(L"| 2 | Вывести все уникальные кириллические и латинские символы в тексте.                                       |\n"); 
-	wprintf(L"╠───╬──────────────────────────────────────────────────────────────────────────────────────────────────────────╣\n");
-	wprintf(L"| 3 | Подсчитать и вывести количество слов (плюс вывести слова в скобках) длина которых равна 1, 2, 3, и.т.д.. |\n");
-	wprintf(L"╠───╬──────────────────────────────────────────────────────────────────────────────────────────────────────────╣\n");
-	wprintf(L"| 4 | Удалить все слова которые заканчиваются на заглавный символ.                                             |\n");
-	wprintf(L"╚───╩──────────────────────────────────────────────────────────────────────────────────────────────────────────╝\n");
 }
 
 int main()
 {
 	setlocale(LC_ALL, "");
 	// вывод сообщения с информацией о варианте и ФИО студента
-	printWelcomeMessage();
+	//printWelcomeMessage();
 
 	// чтениe номера действия (доработать)
 	int N;
@@ -398,17 +319,18 @@ int main()
 	}
 	else
 	{
-		if (N == 5) { printManual();}
+		if (N == 5) { /*printManual();*/ }
 		else
 		{
 			// вывод данных введённых слов
-			//struct Sentence* wordsArr = NULL;
-			//wordsArr = readSentence();
+			//struct Sentence* sentence = readSentence();
+			//for (size_t i = 0; i < sentence->len; i++)
+			//{
+			//	wprintf(L"word is [%ls] | punct is [%lc] | len is [%ld]\n", sentence->words_array[i]->word, sentence->words_array[i]->punct, sentence->words_array[i]->len);
+			//}
 
 			// вывод введённого пользователем текста
-			struct Text* text = (struct Text*)malloc(sizeof(struct Text));
-			text = readText();
-			remDupFromText(&text);
+			struct Text* text = readText();
 			printText(&text);
 
 			switch(N)
