@@ -5,6 +5,7 @@
 #include <wchar.h>
 #include <wctype.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "./include/printWelcomeMessage.h"
 #include "./include/printManual.h"
@@ -167,20 +168,20 @@ struct Sentence* readSentence()
 	while (1)
 	{
 		// если последний знак препинания равен точке, то это значит что предложение закончилось
-		if (count_of_read_words >= 1)
+		if (c == L'.' && count_of_read_words >= 1)
 		{
 			if (words_array[count_of_read_words - 1]->punct == L'.')
 			{
 				break;
 			}
 		}
-		else
+		/*else
 		{
 			if (words_array[0]->punct == L'.')
 			{
 				break;
 			}
-		}
+		}*/
 
 		// проверяем условие начала слова
 		if (!in_word && !iswspace(c) && c != L',' && c != L'.')
@@ -193,8 +194,13 @@ struct Sentence* readSentence()
 		// проверяем какие знаки стоят после слова и записываем 
 		else if (count_of_read_words >= 1 && !in_word)
 		{
-			// если точка
-			if (c == L'.' && words_array[count_of_read_words - 1]->punct != L'.') { words_array[count_of_read_words - 1]->punct = L'.'; }
+			// если точка, то дальше проверять смысла нет, присваивает точку структуре и выходим из цикла
+			if (c == L'.' && words_array[count_of_read_words - 1]->punct != L'.')
+			{
+				words_array[count_of_read_words - 1]->punct = L'.';
+				break;
+			}
+			// если в промежутке между словами появилась запятая
 			else if (c == ',' && words_array[count_of_read_words - 1]->punct == L'\0') { words_array[count_of_read_words - 1]->punct = L','; }
 		}
 		else
@@ -263,24 +269,136 @@ struct Text* readText()
 	text->sentences_array = NULL;
 	text->len = 0;
 
-	struct Sentence* curr_sentence = readSentence();
+	struct Sentence* curr_sentence;
 
-	uint32_t count_of_read_sentences = 1, count_of_allocated_sentences = 0;
+	uint32_t count_of_read_sentences = 0, count_of_allocated_sentences = 0;
 
 	while (1)
 	{
-		if (count_of_read_sentences > count_of_allocated_sentences) { safetyReallocMemToSentencesArray(&(text->sentences_array), &count_of_allocated_sentences); }
-
-		text->sentences_array[count_of_read_sentences-1] = curr_sentence;
+		if (count_of_read_sentences >= count_of_allocated_sentences) { safetyReallocMemToSentencesArray(&(text->sentences_array), &count_of_allocated_sentences); }
 
 		curr_sentence = readSentence();
-		if (curr_sentence->is_last) { break; }
+
+		// обрабатываем случай последнего предложения
+		if (curr_sentence->is_last)
+		{
+			// если функция чтения предложения вернула пустой массив words_array, делаем break
+			if (curr_sentence->words_array[0]->word == NULL) { break; }
+			else
+			{
+				text->sentences_array[count_of_read_sentences] = curr_sentence;
+				count_of_read_sentences++;
+				break;
+			}
+		}
+		text->sentences_array[count_of_read_sentences] = curr_sentence;
 		count_of_read_sentences++;
 	}
 
 	text->len = count_of_read_sentences;
 
 	return text;
+}
+
+void remSentence(struct Text **text, uint32_t index_of_sentence)
+{
+	//struct Sentence *sentence = (*text)->sentences_array[index_of_sentence];
+	/*wprintf(L"i is [%ls] | i + 1 is [%ls]\n", (*text)->sentences_array[0]->words_array[0]->word, (*text)->sentences_array[1]->words_array[0]->word);
+	free(sentence);
+	(*(*text)).len--;
+	
+	// сдвигаем все значения sentence_array на один влево
+	for (uint32_t i = index_of_sentence; i < ((*text)->len - 1); i++)
+	{
+		(*text)->sentences_array[i] = (*text)->sentences_array[i + 1];
+		free((*text)->sentences_array[i + 1]);
+		//wprintf(L"i is [%ls]\n", (*text)->sentences_array[i]->words_array[0]->word);
+	}*/
+
+	/*if (index_of_sentence < (*text)->len - 1)
+	{
+		(*text)->sentences_array[index_of_sentence] = memmove(&(*text)->sentences_array[index_of_sentence], &(*text)->sentences_array[index_of_sentence + 1], ((*text)->len - index_of_sentence - 1) * sizeof(struct Sentence*));
+		free((*text)->sentences_array[(*text)->len - 1]);
+	}
+	else
+	{
+		free(sentence);
+	}
+	printText(text);*/
+	struct Sentence *sentence_to_del = (*text)->sentences_array[index_of_sentence];
+    memmove(&(*text)->sentences_array[index_of_sentence], &(*text)->sentences_array[index_of_sentence + 1], ((*text)->len - index_of_sentence - 1) * sizeof(struct Sentence *));
+    free(sentence_to_del);
+    (*(*text)).len--;
+}
+
+void remDupFromText(struct Text** text)
+{
+	// флаг равенства предложений
+
+	uint8_t flag = 0;
+	
+	// индекс фиксрованного предложения
+	uint32_t i = 0;
+	while(1)
+	{
+		struct Sentence *sentence1;
+		// фиксируем предложение
+		if(i <= (*text)->len - 1) { sentence1 = (*text)->sentences_array[i]; }
+		else { break; }
+
+		// проверяем, что в тексте есть следующиее за зафиксированным предложение
+		if (!sentence1->is_last)
+		{
+			uint32_t j = i + 1;
+
+			// проходимся по всем предложениям, начиная от следующего после зафиксированного
+			while(1)
+			{
+				struct Sentence *sentence2;
+
+				// проверяем, что j ещё не вышел за пределы допустимых индексов
+				if (j <= (*text)->len - 1) { sentence2 = (*text)->sentences_array[j]; } 
+				else { break; }
+
+				// если количество слов в предложении разное, то дальше проверять смысла нет
+				if (sentence1->len != sentence2->len)
+				{
+					j++;
+					continue;
+				}
+				else
+				{
+					// сраниваем каждое слово и его знак препинания
+					for (uint32_t k = 0; k < sentence1->len; k++)
+					{
+						if (!wcscasecmp(sentence1->words_array[k]->word, sentence2->words_array[k]->word) && sentence1->words_array[k]->punct == sentence2->words_array[k]->punct)
+						{
+							flag = 1;
+						}
+						else
+						{
+							flag = 0;
+							break;
+						}	
+					}
+				}
+				if (flag)
+				{
+					remSentence(&(*text), j);
+					//printText(&(*text));
+					//wprintf(L"\n");
+					flag = 0;
+				}
+				else{ j++; }
+			}
+		}
+		// если за зафиксированным больше нет предложений - выходим из цикла
+		else
+		{
+			break;
+		}
+		i++;
+	}
 }
 
 void printText(struct Text **text)
@@ -299,6 +417,7 @@ void printText(struct Text **text)
 
 			else { wprintf(L"%ls ", (sentence->words_array)[j]->word); }
 		}
+		//if (!(sentence->is_last)) { wprintf(L"\n"); }
 		wprintf(L"\n");
 	}
 }
@@ -331,6 +450,7 @@ int main()
 
 			// вывод введённого пользователем текста
 			struct Text* text = readText();
+			remDupFromText(&text);
 			printText(&text);
 
 			switch(N)
