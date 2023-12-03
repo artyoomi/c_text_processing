@@ -1,0 +1,1 @@
+void remWordsWithLastUppercaseLetter(struct Text **text);
