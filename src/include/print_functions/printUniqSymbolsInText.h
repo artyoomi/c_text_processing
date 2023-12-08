@@ -1,0 +1,1 @@
+void printUniqSymbolsInText(struct Text **text);

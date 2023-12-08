@@ -1,0 +1,1 @@
+void printNumOfWordsOfACertainLen(struct Text **const text);

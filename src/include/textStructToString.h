@@ -1,0 +1,1 @@
+wchar_t *textStructToString(struct Text **text);
