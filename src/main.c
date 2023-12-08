@@ -9,19 +9,23 @@
 #include "./include/macro.h"
 #include "./include/textStructToString.h"
 
+// print functions
 #include "./include/print_functions/printWelcomeMessage.h"
 #include "./include/print_functions/printManual.h"
 #include "./include/print_functions/printText.h"
 #include "./include/print_functions/printUniqSymbolsInText.h"
 #include "./include/print_functions/printNumOfWordsOfACertainLen.h"
 
+// safety realloc functions
 #include "./include/safety_realloc_functions/safetyReallocMemToWStr.h"
 #include "./include/safety_realloc_functions/safetyReallocMemToWordStructsArray.h"
 #include "./include/safety_realloc_functions/safetyReallocMemToSentenceStructsArray.h"
 
+// read text functions
 #include "./include/read_functions/readSentence.h"
 #include "./include/read_functions/readText.h"
 
+// remove functions
 #include "./include/remove_functions/remSentence.h"
 #include "./include/remove_functions/remDupFromText.h"
 #include "./include/remove_functions/remWord.h"
@@ -80,25 +84,21 @@ int main()
 
 					//wprintf(L"\nText with sentences shifted by [%u]:\n", number_of_shifts);
 					printText(&text);
-
 					break;
 
 				case 2:
 					printUniqSymbolsInText(&text);
-
 					break;
 
 				case 3:
 					printNumOfWordsOfACertainLen(&text);
-
 					break;
 
 				case 4:
 					remWordsWithLastUppercaseLetter(&text);
 
-					wprintf(L"Text without words with the last letter in uppercase:\n");
+					//wprintf(L"Text without words with the last letter in uppercase:\n");
 					printText(&text);
-
 					break;
 			}
 

@@ -11,6 +11,7 @@
 	#include "../../include/safety_realloc_functions/safetyReallocMemToWordStructsArray.h"
 #endif
 
+// comparator to quick sort Word structs array 
 int32_t words_len_cmp(const void *w1, const void *w2)
 {
 	const uint32_t len1 = (*(*((struct Word **)w1))).len;
@@ -26,10 +27,11 @@ void printNumOfWordsOfACertainLen(struct Text **const text)
 	uint32_t count_of_read_words = 0;
 	uint32_t count_of_allocated_words = 0;
 
+	// create Word struct array to contain all words in text
 	struct Word **text_words_array = NULL;
 	safetyReallocMemToWordStructsArray(&text_words_array, &count_of_allocated_words);
 
-	// запроняем массив слов
+	// fill words array
 	for (uint32_t i = 0; i < (*text)->len; i++)
 	{
 		for (uint32_t j = 0; j < (*text)->sentences_array[i]->len; j++)
@@ -43,15 +45,8 @@ void printNumOfWordsOfACertainLen(struct Text **const text)
 	// сортируем массив слов по возрастанию длины слова
 	qsort(text_words_array, count_of_read_words, sizeof(struct Word *), words_len_cmp);
 
-	// проверяем, что текст не пуст
-	if (count_of_read_words == 0)
-	{
-		wprintf(L"\033[33mWarning: text is empty\n");
-	}
-	else
-	{
-		//wprintf(L"Words with certain lens\n");
-	}
+	// checkes Word structs array len
+	if (count_of_read_words == 0) { wprintf(L"\033[33mWarning: text is empty\n"); }
 
 	// выводим длину слова, и слова этой длины
 	uint32_t curr_len = 0;
