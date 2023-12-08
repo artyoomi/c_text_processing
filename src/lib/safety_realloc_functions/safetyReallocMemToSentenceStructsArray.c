@@ -17,20 +17,17 @@
 	#include "../../include/macro.h"
 #endif
 
-void safetyReallocMemToSentenceStructsArray(struct Sentence*** buffer, int32_t* count_of_allocated_sentences)
+void safetyReallocMemToSentenceStructsArray(struct Sentence*** sentences_array, int32_t* count_of_allocated_sentences)
 {
-	// сохраняем область памяти, на которую указывает buffer изначально
-	struct Sentence** old_buffer = *buffer;
-
 	// пробуем выделить память
-	*buffer = (struct Sentence**)realloc(*buffer, (*count_of_allocated_sentences + BLOCK_SIZE)*sizeof(struct Sentence*));
+	struct Sentence** new_sentences_array = (struct Sentence**)realloc(*sentences_array, (*count_of_allocated_sentences + BLOCK_SIZE)*sizeof(struct Sentence*));
 
 	// если указатель на buffer == NULL, значит произошла ошибка
-	if (*buffer == NULL)
+	if (new_sentences_array == NULL)
 	{
 		// если память изначально указывала на NULL, это значит что мы её выделяли впервые
 		// выводим соответствующее сообщение об ошибке
-		if (old_buffer == NULL)
+		if (*sentences_array == NULL)
 		{
 			fwprintf(stderr, L"Error: failed to allocate memory\n");
 			exit(EXIT_FAILURE);
@@ -46,14 +43,15 @@ void safetyReallocMemToSentenceStructsArray(struct Sentence*** buffer, int32_t* 
 	{
 		for (uint32_t i = *count_of_allocated_sentences; i < *count_of_allocated_sentences + BLOCK_SIZE; i++)
 		{
-			(*buffer)[i] = (struct Sentence*)malloc(sizeof(struct Sentence));
+			new_sentences_array[i] = (struct Sentence*)malloc(sizeof(struct Sentence));
 
-			if ((*buffer)[i] == NULL)
+			if (new_sentences_array[i] == NULL)
 			{
 				fwprintf(stderr, L"Error: failed to allocate memory to struct Sentence\n");
 				exit(EXIT_FAILURE);
 			}
 		}
+		*sentences_array = new_sentences_array;
 		*count_of_allocated_sentences += BLOCK_SIZE;
 	}
 }

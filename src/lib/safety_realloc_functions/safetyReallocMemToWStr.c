@@ -12,19 +12,18 @@
 	#include "../../include/macro.h"
 #endif
 
-void safetyReallocMemToWStr(wchar_t** buffer, int32_t* count_of_allocated_chars)
+void safetyReallocMemToWStr(wchar_t** wstring, int32_t* count_of_allocated_chars)
 {
 	// сохраняем область памяти, на которую указывает buffer изначально
-	wchar_t* old_buffer = *buffer;
 	// пробуем выделить память
-	*buffer = (wchar_t*)realloc(*buffer, (*count_of_allocated_chars + BLOCK_SIZE)*sizeof(wchar_t));
+	wchar_t* new_wstring = (wchar_t*)realloc(*wstring, (*count_of_allocated_chars + BLOCK_SIZE)*sizeof(wchar_t));
 
 	// если указатель на buffer == NULL, значит произошла ошибка
-	if (*buffer == NULL)
+	if (new_wstring == NULL)
 	{
 		// если память изначально указывала на NULL, это значит что мы её выделяли впервые
 		// выводим соответствующее сообщение об ошибке
-		if (old_buffer == NULL)
+		if (*wstring == NULL)
 		{
 			fwprintf(stderr, L"Error: failed to allocate memory\n");
 			exit(EXIT_FAILURE);
@@ -38,6 +37,7 @@ void safetyReallocMemToWStr(wchar_t** buffer, int32_t* count_of_allocated_chars)
 	}
 	else
 	{
+		*wstring = new_wstring; 
 		*count_of_allocated_chars += BLOCK_SIZE;
 	}
 }

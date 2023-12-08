@@ -1,1 +1,1 @@
-void safetyReallocMemToWordStructsArray(struct Word*** buffer, int32_t* count_of_allocated_words);
+void safetyReallocMemToWordStructsArray(struct Word*** words_array, int32_t* count_of_allocated_words);

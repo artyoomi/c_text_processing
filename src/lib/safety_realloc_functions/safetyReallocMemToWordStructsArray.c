@@ -17,20 +17,17 @@
 	#include "../../include/macro.h"
 #endif
 
-void safetyReallocMemToWordStructsArray(struct Word*** buffer, int32_t* count_of_allocated_words)
+void safetyReallocMemToWordStructsArray(struct Word*** words_array, int32_t* count_of_allocated_words)
 {
-	// сохраняем область памяти, на которую указывает buffer изначально
-	struct Word** old_buffer = *buffer;
-
 	// пробуем выделить память
-	*buffer = (struct Word**)realloc(*buffer, (*count_of_allocated_words + BLOCK_SIZE)*sizeof(struct Word*));
+	struct Word** new_words_array = (struct Word**)realloc(*words_array, (*count_of_allocated_words + BLOCK_SIZE)*sizeof(struct Word*));
 
 	// если указатель на buffer == NULL, значит произошла ошибка
-	if (*buffer == NULL)
+	if (new_words_array == NULL)
 	{
 		// если память изначально указывала на NULL, это значит что мы её выделяли впервые
 		// выводим соответствующее сообщение об ошибке
-		if (old_buffer == NULL)
+		if (*words_array == NULL)
 		{
 			fwprintf(stderr, L"Error: failed to allocate memory\n");
 			exit(EXIT_FAILURE);
@@ -46,13 +43,14 @@ void safetyReallocMemToWordStructsArray(struct Word*** buffer, int32_t* count_of
 	{
 		for (uint32_t i = *count_of_allocated_words; i < *count_of_allocated_words + BLOCK_SIZE; i++)
 		{
-			(*buffer)[i] = (struct Word*)malloc(sizeof(struct Word));
-			if ((*buffer)[i] == NULL)
+			new_words_array[i] = (struct Word*)malloc(sizeof(struct Word));
+			if (new_words_array[i] == NULL)
 			{
 				fwprintf(stderr, L"Error: failed to allocate memory to struct Word\n");
 				exit(EXIT_FAILURE);
 			}
 		}
+		*words_array = new_words_array;
 		*count_of_allocated_words += BLOCK_SIZE;
 	}
 }

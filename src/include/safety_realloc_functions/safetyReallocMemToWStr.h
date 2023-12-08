@@ -1,1 +1,1 @@
-void safetyReallocMemToWStr(wchar_t** buffer, int32_t* count_of_allocated_chars);
+void safetyReallocMemToWStr(wchar_t** wstring, int32_t* count_of_allocated_chars);
