@@ -1,1 +1,0 @@
-void remWord(struct Text **text, const uint32_t index_of_sentence, const uint32_t index_of_word_in_sentence);

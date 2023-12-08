@@ -1,1 +1,0 @@
-void shiftingWordsInText(struct Text **text, uint32_t number_of_shifts);
