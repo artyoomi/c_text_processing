@@ -1,22 +1,4 @@
-#include <stdint.h>
-#include <wchar.h>
-#include <stdlib.h>
-#include <wctype.h>
-
-#ifndef STRUCTS_H
-	#define STRUCTS_H
-	#include "../../include/structs.h"
-#endif
-
-#ifndef TEXT_STRUCT_TO_STRING_H
-	#define TEXT_STRUCT_TO_STRING_H
-	#include "../../include/textStructToString.h"
-#endif
-
-#ifndef SAFETY_REALLOC_MEM_TO_WSTR_H
-	#define SAFETY_REALLOC_MEM_TO_WSTR_H
-	#include "../../include/safety_realloc_functions/safetyReallocMemToWStr.h"
-#endif
+#include "./printUniqSymbolsInText.h"
 
 int32_t chars_cmp(const void *x, const void *y)
 {
@@ -33,10 +15,10 @@ void printUniqSymbolsInText(struct Text **text)
 	uint32_t count_of_read_chars = 0;
 	uint32_t count_of_allocated_chars = 0;
 
+	wchar_t *text_string = textStructToString(text);
+
 	wchar_t *uniq_symbols_string  = NULL;
 	safetyReallocMemToWStr(&uniq_symbols_string, &count_of_allocated_chars);
-
-	wchar_t *text_string = textStructToString(text);
 	
 	uint32_t string_len = wcslen(text_string);
 
@@ -82,7 +64,12 @@ void printUniqSymbolsInText(struct Text **text)
 	}
 	else
 	{
-		wprintf(L"%ls\n", uniq_symbols_string);
+		for (uint32_t i = 0; i < count_of_read_chars; i++)
+		{
+			if (i == 0) { wprintf(L"%lc", uniq_symbols_string[i]); }
+			else { wprintf(L" %lc", uniq_symbols_string[i]); }
+		}
+		wprintf(L"\n");
 	}
 
 	free(uniq_symbols_string);

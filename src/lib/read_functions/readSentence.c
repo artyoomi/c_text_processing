@@ -1,26 +1,4 @@
-#include <wchar.h>
-#include <wctype.h>
-#include <stdlib.h>
-
-#ifndef STRUCTS_H
-	#define STRUCTS_H
-	#include "../../include/structs.h"
-#endif
-
-#ifndef READ_SENTENCE_H
-	#define READ_SENTENCE_H
-	#include "../../include/read_functions/readSentence.h"
-#endif
-
-#ifndef SAFETY_REALLOC_MEM_TO_WORD_STRUCTS_ARRAY_H
-	#define SAFETY_REALLOC_MEM_TO_WORD_STRUCTS_ARRAY_H
-	#include "../../include/safety_realloc_functions/safetyReallocMemToWordStructsArray.h"
-#endif
-
-#ifndef SAFETY_REALLOC_MEM_TO_WSTR_H
-	#define SAFETY_REALLOC_MEM_TO_WSTR_H
-	#include "../../include/safety_realloc_functions/safetyReallocMemToWStr.h"
-#endif
+#include "./readSentence.h"
 
 struct Sentence* readSentence()
 {
@@ -40,6 +18,7 @@ struct Sentence* readSentence()
 	
 	// определяем массив указателей на структуры Word и выделяем под него память
 	struct Word **words_array = NULL;
+	//wprintf(L"DEBUG_BEGIN!!");
 	safetyReallocMemToWordStructsArray(&words_array, &count_of_allocated_words);
 
 	while (1)
@@ -108,9 +87,6 @@ struct Sentence* readSentence()
 						in_word = 0;
 						words_array[count_of_read_words]->word[count_of_read_chars] = L'\0';
 
-						//words_array[count_of_read_words]->word = (wchar_t *)realloc(words_array[count_of_read_words]->word,
-						//	                                                        (count_of_read_chars + 1) * sizeof(wchar_t));
-
 						// сохраняем длину слова
 						words_array[count_of_read_words]->len = count_of_read_chars;
 						
@@ -145,16 +121,21 @@ struct Sentence* readSentence()
 	// если не было считано ни одного слова, то
 	if (count_of_read_words == 0)
 	{
+		for (uint32_t i = 0; i < count_of_allocated_words; ++i)
+		{
+			free(words_array[i]);
+		}
 		free(words_array);
 		sentence->words_array = NULL;
 		sentence->len = 0;
+		sentence->allocated_size = 0;
 	}
 	else
 	{
-		//words_array = (struct Word **)realloc(words_array, (count_of_read_words + 1) * sizeof(struct Word *));
 		sentence->words_array = words_array;
 		sentence->len = count_of_read_words;
+		sentence->allocated_size = count_of_allocated_words;
 	}
-
+	//wprintf(L"DEBUG_END!!");
 	return sentence;
 }

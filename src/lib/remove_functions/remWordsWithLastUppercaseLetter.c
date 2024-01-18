@@ -1,26 +1,4 @@
-#include <wchar.h>
-#include <stdlib.h>
-#include <wctype.h>
-
-#ifndef STRUCTS_H
-	#define STRUCTS_H
-	#include "../../include/structs.h"
-#endif
-
-#ifndef REM_WORD_H
-	#define REM_WORD_H
-	#include "../../include/remove_functions/remWord.h"
-#endif
-
-#ifndef REM_WORDS_WITH_UPPERCASE_LETTER_H
-	#define REM_WORDS_WITH_UPPERCASE_LETTER_H
-	#include "../../include/remove_functions/remWordsWithLastUppercaseLetter.h"
-#endif
-
-#ifndef REM_SENTENCE_H
-	#define REM_SENTENCE_H
-	#include "../../include/remove_functions/remSentence.h"
-#endif
+#include "./remWordsWithLastUppercaseLetter.h"
 
 void remWordsWithLastUppercaseLetter(struct Text **text)
 {
@@ -33,7 +11,7 @@ void remWordsWithLastUppercaseLetter(struct Text **text)
 		// перебор по словам в i-м предложении
 		while(j < (*text)->sentences_array[i]->len)
 		{
-			if ((*text)->len != 0)
+			if ((*text)->sentences_array[i]->len != 0)
 			{
 				// проверяем, что последний символ в верхнем регистре
 				if ((*text)->sentences_array[i]->words_array[j]->len >= 1 &&
@@ -49,14 +27,11 @@ void remWordsWithLastUppercaseLetter(struct Text **text)
 					// проверяем, что слово не является последним в предложении
 					if ((*text)->sentences_array[i]->words_array[j]->len - 1 != j)
 					{
-						remWord(text, i, j);
-						(*(*text)->sentences_array[i]).len--;
+						remWord(&((*text)->sentences_array[i]), j);
 						continue;
 					}
 					else
 					{
-						free((*text)->sentences_array[i]->words_array[j]->word);
-						free((*text)->sentences_array[i]->words_array[j]);
 						(*(*text)->sentences_array[i]).len--;
 						break;
 					}

@@ -1,21 +1,4 @@
-#include <wchar.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#ifndef STRUCTS_H
-	#define STRUCTS_H
-	#include "../../include/structs.h"
-#endif
-
-#ifndef SAFETY_REALLOC_MEM_TO_SENTENCE_STRUCTS_ARRAY_H
-	#define SAFETY_REALLOC_MEM_TO_SENTENCE_STRUCTS_ARRAY_H
-	#include "../../include/safety_realloc_functions/safetyReallocMemToSentenceStructsArray.h"
-#endif
-
-#ifndef MACRO_H
-	#define MACRO_H
-	#include "../../include/macro.h"
-#endif
+#include "./safetyReallocMemToSentenceStructsArray.h"
 
 void safetyReallocMemToSentenceStructsArray(struct Sentence*** sentences_array, int32_t* count_of_allocated_sentences)
 {
@@ -44,6 +27,12 @@ void safetyReallocMemToSentenceStructsArray(struct Sentence*** sentences_array, 
 		for (uint32_t i = *count_of_allocated_sentences; i < *count_of_allocated_sentences + BLOCK_SIZE; i++)
 		{
 			new_sentences_array[i] = (struct Sentence*)malloc(sizeof(struct Sentence));
+			new_sentences_array[i]->words_array = NULL;
+			new_sentences_array[i]->is_last = 0;
+			new_sentences_array[i]->len = 0;
+			new_sentences_array[i]->allocated_size = 0;
+			//wprintf(L"Allocate addr: %p\n", new_sentences_array[i]);
+
 
 			if (new_sentences_array[i] == NULL)
 			{

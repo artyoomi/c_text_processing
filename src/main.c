@@ -1,44 +1,25 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <ctype.h>
-#include <locale.h>
 #include <wchar.h>
+#include <locale.h>
 
-#include "./include/structs.h"
-#include "./include/macro.h"
-#include "./include/textStructToString.h"
+#include "./lib/structs.h"
+#include "./lib/print_functions/printWelcomeMessage.h"
+#include "./lib/print_functions/printManual.h"
+#include "./lib/print_functions/printText.h"
+#include "./lib/print_functions/printUniqSymbolsInText.h"
+#include "./lib/print_functions/printNumOfWordsOfACertainLen.h"
+#include "./lib/read_functions/readText.h"
+#include "./lib/remove_functions/remDupFromText.h"
+#include "./lib/remove_functions/remWordsWithLastUppercaseLetter.h"
+#include "./lib/shifting_functions/shiftingWordsInText.h"
+#include "./lib/free_functions/freeText.h"
 
-// print functions
-#include "./include/print_functions/printWelcomeMessage.h"
-#include "./include/print_functions/printManual.h"
-#include "./include/print_functions/printText.h"
-#include "./include/print_functions/printUniqSymbolsInText.h"
-#include "./include/print_functions/printNumOfWordsOfACertainLen.h"
-
-// safety realloc functions
-#include "./include/safety_realloc_functions/safetyReallocMemToWStr.h"
-#include "./include/safety_realloc_functions/safetyReallocMemToWordStructsArray.h"
-#include "./include/safety_realloc_functions/safetyReallocMemToSentenceStructsArray.h"
-
-// read text functions
-#include "./include/read_functions/readSentence.h"
-#include "./include/read_functions/readText.h"
-
-// remove functions
-#include "./include/remove_functions/remSentence.h"
-#include "./include/remove_functions/remDupFromText.h"
-#include "./include/remove_functions/remWord.h"
-#include "./include/remove_functions/remWordsWithLastUppercaseLetter.h"
-
-#include "./include/shifting_functions/shiftingWordsInText.h"
-
-#include "./include/freeText.h"
-
-
+#include "./lib/def_task/addSmile.h"
 
 int main()
 {
+	// changes
 	setlocale(LC_ALL, "");
 	
 	// печатаем приветственное сообщение
@@ -47,10 +28,10 @@ int main()
 	// считываем номер команды
 	uint8_t command;
 	//wprintf(L"\nEnter a number (a number from 0 to 5): ");
-	wscanf(L"%u", &command);
+	uint32_t success = wscanf(L"%u", &command);
 
 	// проверяем команду на корректность
-	if (command > 5 || command < 0)
+	if (success == 0 && ((command > 5 || command < 0 || command != 9)))
 	{
 		fwprintf(stderr, L"\033[31mError:\033[0m wrong option\n");
 	}
@@ -61,24 +42,27 @@ int main()
 		{
 			//wprintf(L"\nEnter the text below:\n");
 
-			// ввод и первичная обработка текста
-			struct Text* text = readText();
-			remDupFromText(&text);
+			struct Text* text;
 			
 			uint32_t number_of_shifts = 0;
 
-			// выолпяем подзадачи
+			// выполняем подзадачи
 			switch(command)
 			{
 				case 0:
+					text = readText();
+					remDupFromText(&text);
+
 					//wprintf(L"Text without repeating sentences:\n");
 					printText(&text);
-
 					break;
 
 				case 1:
 					//wprintf(L"\nEnter the number by which you want to shift the words in text: ");
 					wscanf(L"%u", &number_of_shifts);
+
+					text = readText();
+					remDupFromText(&text);
 
 					shiftingWordsInText(&text, number_of_shifts);
 
@@ -87,22 +71,38 @@ int main()
 					break;
 
 				case 2:
+					text = readText();
+					remDupFromText(&text);
+
 					printUniqSymbolsInText(&text);
 					break;
 
 				case 3:
+					text = readText();
+					remDupFromText(&text);
+
 					printNumOfWordsOfACertainLen(&text);
 					break;
 
 				case 4:
+					text = readText();
+					remDupFromText(&text);
+
 					remWordsWithLastUppercaseLetter(&text);
 
 					//wprintf(L"Text without words with the last letter in uppercase:\n");
 					printText(&text);
 					break;
-			}
 
-			// освобождаем выделенную под текст память
+				case 9:
+					text = readText();
+					remDupFromText(&text);
+
+					addSmile(&text);
+					printText(&text);
+
+					break;
+			}
 			freeText(&text);
 		}
 	}

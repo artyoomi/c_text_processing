@@ -1,26 +1,15 @@
-#include <wchar.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#ifndef STRUCTS_H
-	#define STRUCTS_H
-	#include "../include/structs.h"
-#endif
-
-#ifndef TEXT_STRUCT_TO_STRING
-	#define TEXT_STRUCT_TO_STRING
-	#include "../include/textStructToString.h"
-#endif
-
-#ifndef SAFETY_REALLOC_MEM_TO_WSTR_H
-	#define SAFETY_REALLOC_MEM_TO_WSTR_H
-	#include "../include/safety_realloc_functions/safetyReallocMemToWStr.h"
-#endif
+#include "./textStructToString.h"
 
 wchar_t *textStructToString(struct Text **text)
 {
 	uint32_t count_of_read_chars = 0;                 // хранит количество считанных символов
-	uint32_t count_of_allocated_chars = 0;			  // хранит количество выделенных единиц памяти для символов
+	uint32_t count_of_allocated_chars = 0; 	
+
+	if ((*text)->len == 0) {
+		wprintf(L"\033[33mWarning:\033[0m text is empty\n");
+		freeText(text);
+		exit(EXIT_SUCCESS);
+	}
 
 	// объявляем и выделяем память под строку, которая будет хранить текст единой строкой
 	wchar_t *string_text = NULL;
@@ -32,7 +21,7 @@ wchar_t *textStructToString(struct Text **text)
 		// итерирование по словам
 		for (uint32_t j = 0; j < (*text)->sentences_array[i]->len; j++)
 		{
-			// итерирование по символам слов
+			// итерирование по символам в слове
 			for (uint32_t k = 0; k < (*text)->sentences_array[i]->words_array[j]->len; k++)
 			{
 				// проверяем, что памяти ещё хватает
@@ -40,7 +29,6 @@ wchar_t *textStructToString(struct Text **text)
 				{
 					safetyReallocMemToWStr(&string_text, &count_of_allocated_chars);
 				}
-
 				// записываем очередной символ
 				string_text[count_of_read_chars++] = (*text)->sentences_array[i]->words_array[j]->word[k];
 			}
@@ -48,34 +36,30 @@ wchar_t *textStructToString(struct Text **text)
 			// если знак препинания у слова есть
 			if ((*text)->sentences_array[i]->words_array[j]->punct != L'\0')
 			{
+				// проверяем, что памяти ещё хватает
 				if (count_of_read_chars == count_of_allocated_chars)
 				{
 					safetyReallocMemToWStr(&string_text, &count_of_allocated_chars);
 				}
-
+				// записываем знак препинания в строку
 				string_text[count_of_read_chars++] = (*text)->sentences_array[i]->words_array[j]->punct;
 			}
 
+			// проверяем, что памяти ещё хватает
 			if (count_of_read_chars == count_of_allocated_chars)
 			{
 				safetyReallocMemToWStr(&string_text, &count_of_allocated_chars);
 			}
 
+			// ставит пробел между словами
 			string_text[count_of_read_chars++] = L' ';
 		}
 	}
 
+	// снова проверяем, что памяти ещё хватает
 	if (count_of_read_chars == count_of_allocated_chars)
 	{
 		safetyReallocMemToWStr(&string_text, &count_of_allocated_chars);
-	}
-
-	// если количество считанных символов равно нулю, освобождаем память
-	if (count_of_read_chars == 0)
-	{
-		free(string_text);
-		fwprintf(stderr, L"\033[33mWarning:\033[0m text is empty\n");
-		exit(EXIT_SUCCESS);
 	}
 
 	// переходим на новую строку и ставим знак конца строки

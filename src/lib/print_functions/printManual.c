@@ -1,9 +1,4 @@
-#include <wchar.h>
-
-#ifndef PRINT_MANUAL_H
-	#define PRINT_MANUAL_H
-	#include "../../include/print_functions/printManual.h"
-#endif
+#include "./printManual.h"
 
 void printManual()
 {

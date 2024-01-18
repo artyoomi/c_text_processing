@@ -1,15 +1,4 @@
-#include <wchar.h>
-#include <stdlib.h>
-
-#ifndef STRUCTS_H
-	#define STRUCTS_H
-	#include "../../include/structs.h"
-#endif
-
-#ifndef SAFETY_REALLOC_MEM_TO_WORD_STRUCTS_ARRAY_H
-	#define SAFETY_REALLOC_MEM_TO_WORD_STRUCTS_ARRAY_H
-	#include "../../include/safety_realloc_functions/safetyReallocMemToWordStructsArray.h"
-#endif
+#include "./printNumOfWordsOfACertainLen.h"
 
 // comparator to quick sort Word structs array 
 int32_t words_len_cmp(const void *w1, const void *w2)
@@ -25,28 +14,28 @@ int32_t words_len_cmp(const void *w1, const void *w2)
 void printNumOfWordsOfACertainLen(struct Text **const text)
 {
 	uint32_t count_of_read_words = 0;
-	uint32_t count_of_allocated_words = 0;
+
+	// total word count
+	for (uint32_t i = 0; i < (*text)->len; i++) {
+		count_of_read_words += (*text)->sentences_array[i]->len;
+	}
+
 
 	// create Word struct array to contain all words in text
-	struct Word **text_words_array = NULL;
-	safetyReallocMemToWordStructsArray(&text_words_array, &count_of_allocated_words);
+	struct Word **text_words_array = (struct Word**)malloc(count_of_read_words * sizeof(struct Word*));
 
 	// fill words array
+	uint32_t k = 0;
 	for (uint32_t i = 0; i < (*text)->len; i++)
 	{
 		for (uint32_t j = 0; j < (*text)->sentences_array[i]->len; j++)
 		{
-			if (count_of_read_words >= count_of_allocated_words) { safetyReallocMemToWordStructsArray(&text_words_array, 
-																									  &count_of_allocated_words); }
-			text_words_array[count_of_read_words++] = (*text)->sentences_array[i]->words_array[j];
+			text_words_array[k++] = (*text)->sentences_array[i]->words_array[j];
 		}
 	}
 
 	// сортируем массив слов по возрастанию длины слова
 	qsort(text_words_array, count_of_read_words, sizeof(struct Word *), words_len_cmp);
-
-	// checkes Word structs array len
-	if (count_of_read_words == 0) { wprintf(L"\033[33mWarning: text is empty\n"); }
 
 	// выводим длину слова, и слова этой длины
 	uint32_t curr_len = 0;
@@ -64,4 +53,6 @@ void printNumOfWordsOfACertainLen(struct Text **const text)
 		wprintf(L" %ls", text_words_array[k]->word);
 		if (k + 1 == count_of_read_words) { wprintf(L")\n"); }
 	}
+	
+	free(text_words_array);
 }

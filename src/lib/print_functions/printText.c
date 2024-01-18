@@ -1,16 +1,4 @@
-#include <wchar.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#ifndef STRUCTS_H
-	#define STRUCTS_H
-	#include "../../include/structs.h"
-#endif
-
-#ifndef PRINT_TEXT_H
-	#define PRINT_TEXT_H
-	#include "../../include/print_functions/printText.h"
-#endif
+#include "./printText.h"
 
 void printText(struct Text **text)
 {

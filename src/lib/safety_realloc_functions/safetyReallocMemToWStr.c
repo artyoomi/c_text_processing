@@ -1,16 +1,4 @@
-#include <wchar.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#ifndef SAFETY_REALLOC_MEM_TO_WSTR_H
-	#define SAFETY_REALLOC_MEM_TO_WSTR_H
-	#include "../../include/safety_realloc_functions/safetyReallocMemToWStr.h"
-#endif
-
-#ifndef MACRO_H
-	#define MACRO_H
-	#include "../../include/macro.h"
-#endif
+#include "./safetyReallocMemToWStr.h"
 
 void safetyReallocMemToWStr(wchar_t** wstring, int32_t* count_of_allocated_chars)
 {
@@ -36,8 +24,8 @@ void safetyReallocMemToWStr(wchar_t** wstring, int32_t* count_of_allocated_chars
 		}
 	}
 	else
-	{
-		*wstring = new_wstring; 
+	{	
+		*wstring = new_wstring;
 		*count_of_allocated_chars += BLOCK_SIZE;
 	}
 }

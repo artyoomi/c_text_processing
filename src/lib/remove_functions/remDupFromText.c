@@ -1,22 +1,4 @@
-#include <wchar.h>
-#include <stdlib.h>
-
-#ifndef STRUCTS_H
-	#define STRUCTS_H
-	#include "../../include/structs.h"
-#endif
-
-#ifndef REM_DUP_FROM_TEXT_H
-	#define REM_DUP_FROM_TEXT_H
-	#include "../../include/remove_functions/remDupFromText.h"
-#endif
-
-#ifndef REM_SENTENCE_H
-	#define REM_SENTENCE_H
-	#include "../../include/remove_functions/remSentence.h"
-#endif
-
-#define TRUE 1
+#include "./remDupFromText.h"
 
 void remDupFromText(struct Text** text)
 {
@@ -30,7 +12,7 @@ void remDupFromText(struct Text** text)
 		// индекс фиксрованного предложения
 		uint32_t i = 0;
 
-		while(TRUE)
+		while(1)
 		{
 			struct Sentence *sentence1;
 			
@@ -44,7 +26,7 @@ void remDupFromText(struct Text** text)
 				uint32_t j = i + 1;
 
 				// проходимся по всем предложениям, начиная от следующего после зафиксированного
-				while(TRUE)
+				while(1)
 				{
 					struct Sentence *sentence2;
 
